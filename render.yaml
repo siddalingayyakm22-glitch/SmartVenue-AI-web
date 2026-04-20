@@ -1,0 +1,39 @@
+services:
+  # Backend API + Socket.io
+  - type: web
+    name: smartvenue-api
+    env: docker
+    dockerContext: backend
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: smartvenue-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://smartvenue.netlify.app # TODO: Update with your actual Netlify URL
+      - key: NODE_ENV
+        value: production
+
+  # Static Frontend (This is an alternative to Netlify, if you want everything on Render)
+  - type: static
+    name: smartvenue-ui
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: smartvenue-api
+          property: host
+
+databases:
+  - name: smartvenue-db
+    plan: free
+    databaseName: smartvenue
+    user: admin
